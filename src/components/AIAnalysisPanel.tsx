@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,12 +28,12 @@ const AIAnalysisPanel = ({ bookmarks, aiSuggestions, onAnalyze, analyzing }: AIA
   // Chart data
   const categoryData = aiSuggestions.categories?.slice(0, 5).map(cat => ({
     name: cat.name,
-    value: cat.count
+    dataKey: cat.count
   })) || [];
 
   const domainData = aiSuggestions.topDomains?.slice(0, 5).map(domain => ({
     name: domain.domain,
-    value: domain.count
+    dataKey: domain.count
   })) || [];
 
   return (
@@ -86,10 +85,10 @@ const AIAnalysisPanel = ({ bookmarks, aiSuggestions, onAnalyze, analyzing }: AIA
               <Chart
                 type="pie"
                 data={categoryData}
-                index="name"
-                categories={["value"]}
-                valueFormatter={(value) => `${value}个`}
-                className="h-full"
+                dataKey="dataKey"
+                nameKey="name"
+                height="100%"
+                width="100%"
               />
             </CardContent>
           </Card>
@@ -103,10 +102,10 @@ const AIAnalysisPanel = ({ bookmarks, aiSuggestions, onAnalyze, analyzing }: AIA
               <Chart
                 type="bar"
                 data={domainData}
-                index="name"
-                categories={["value"]}
-                valueFormatter={(value) => `${value}个`}
-                className="h-full"
+                dataKey="dataKey"
+                nameKey="name"
+                height="100%"
+                width="100%"
               />
             </CardContent>
           </Card>
