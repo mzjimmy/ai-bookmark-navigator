@@ -1,12 +1,18 @@
-
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, FileUp, AlertCircle } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { parseHtmlBookmarks } from '@/utils/bookmarkParser';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import React, { useState, useCallback } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { parseHtmlBookmarks } from "@/utils/bookmarkParser";
+import { MAX_HTML_BOOKMARKS } from "@/utils/bookmarkParser";
+import { useDropzone } from 'react-dropzone';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -15,156 +21,151 @@ interface ImportModalProps {
 }
 
 const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
-  const [fileContent, setFileContent] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [fileType, setFileType] = useState<'json' | 'html' | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [isLargeFile, setIsLargeFile] = useState(false);
+  const [htmlContent, setHtmlContent] = useState("");
   const { toast } = useToast();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setFileName(file.name);
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    setFileType(fileExtension === 'json' ? 'json' : 'html');
-    
-    // Check file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      setIsLargeFile(true);
-      toast({
-        title: "警告",
-        description: "文件较大，处理可能需要一些时间，且可能无法导入全部书签。",
-        variant: "warning",
-      });
-    } else {
-      setIsLargeFile(false);
-    }
-    
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      setFileContent(content);
+
+    reader.onload = (e: any) => {
+      const content = e.target.result;
+      setHtmlContent(content);
     };
-    
+
+    reader.onabort = () => console.log('file reading was aborted');
+    reader.onerror = () => console.log('file reading has failed');
+
     reader.readAsText(file);
+  }, []);
+
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop, accept: {
+    'text/html': ['.html', '.htm'],
+  }})
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setHtmlContent(e.target.value);
   };
 
   const handleImport = () => {
-    if (!fileContent) {
+    try {
+      const bookmarks = parseHtmlBookmarks(htmlContent);
+      if (bookmarks.length === 0) {
+        toast({
+          title: "未找到书签",
+          description: "请检查HTML内容是否包含有效的书签数据。",
+        });
+        return;
+      }
+      onImport(bookmarks);
+      onClose();
+      toast({
+        title: "导入成功",
+        description: `成功导入 ${bookmarks.length} 个书签。`,
+      });
+    } catch (error) {
+      console.error("导入错误:", error);
+      toast({
+        title: "导入错误",
+        description: "解析HTML内容时出错，请检查文件格式。",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
       toast({
         title: "错误",
-        description: "请先选择文件",
+        description: "未选择任何文件。",
         variant: "destructive",
       });
       return;
     }
 
-    setLoading(true);
-    
-    try {
-      let bookmarks;
-      if (fileType === 'json') {
-        bookmarks = JSON.parse(fileContent);
-      } else {
-        bookmarks = parseHtmlBookmarks(fileContent);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const content = e.target?.result as string;
+      try {
+        const bookmarks = parseHtmlBookmarks(content);
+         
+        if (bookmarks.length > MAX_HTML_BOOKMARKS) {
+          toast({
+            title: "导入限制",
+            description: `只导入前${MAX_HTML_BOOKMARKS}个书签以避免存储空间不足。`,
+            variant: "destructive",
+          });
+        }
+        
+        onImport(bookmarks);
+        onClose();
+        toast({
+          title: "导入成功",
+          description: `成功导入 ${bookmarks.length} 个书签。`,
+        });
+      } catch (parseError) {
+        console.error("解析错误:", parseError);
+        toast({
+          title: "解析错误",
+          description: "解析HTML文件时出错，请检查文件格式。",
+          variant: "destructive",
+        });
       }
-      
-      onImport(bookmarks);
-      
+    };
+
+    reader.onerror = () => {
       toast({
-        title: "导入成功",
-        description: `已成功导入${bookmarks.length}个书签`,
-      });
-      
-      setFileContent(null);
-      setFileName(null);
-      setFileType(null);
-      setIsLargeFile(false);
-      onClose();
-    } catch (error) {
-      toast({
-        title: "导入失败",
-        description: fileType === 'json' ? "JSON文件格式不正确" : "HTML文件格式不正确",
+        title: "文件读取错误",
+        description: "无法读取文件，请检查文件是否损坏。",
         variant: "destructive",
       });
-      console.error("Import error:", error);
-    } finally {
-      setLoading(false);
-    }
+    };
+    reader.readAsText(file);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogTrigger asChild>
+        <Button variant="outline">导入书签</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>导入书签</DialogTitle>
+          <DialogTitle>导入HTML书签</DialogTitle>
         </DialogHeader>
-
-        <Tabs defaultValue="file" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="file">从文件导入</TabsTrigger>
-            <TabsTrigger value="browser">从浏览器导入</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="file" className="py-4">
-            {isLargeFile && (
-              <Alert className="mb-4" variant="warning">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  文件较大，可能只会导入部分书签（最多100个）以避免存储空间不足。
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4">
-              <Upload className="h-10 w-10 text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500 mb-2">
-                上传JSON或HTML格式的书签文件
-              </p>
-              <label className="cursor-pointer">
-                <span className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-flex items-center">
-                  <FileUp className="h-4 w-4 mr-2" />
-                  选择文件
-                </span>
-                <input
-                  type="file"
-                  accept=".json,.html,.htm"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </label>
-              {fileName && (
-                <p className="text-sm text-gray-600 mt-2">已选择: {fileName}</p>
-              )}
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="import-html">
+              将您的书签从HTML文件导入
+            </Label>
+            <div {...getRootProps()} className="border-2 border-dashed rounded-md p-4 cursor-pointer">
+              <input {...getInputProps()} id="import-html" />
+              {
+                isDragActive ?
+                  <p className="text-center">将文件拖到此处 ...</p> :
+                  <p className="text-center">拖放文件到此处，或点击选择文件</p>
+              }
             </div>
-          </TabsContent>
-
-          <TabsContent value="browser" className="py-4">
-            <div className="text-center">
-              <p className="text-sm text-gray-500 mb-4">
-                从浏览器导入书签需要以下步骤：
-              </p>
-              <ol className="text-left text-sm text-gray-600 space-y-2 pl-5 list-decimal mb-6">
-                <li>在浏览器书签管理器中选择"导出书签"</li>
-                <li>选择导出的HTML文件上传到这里</li>
-              </ol>
-              <p className="text-xs text-gray-500 mb-4">
-                支持Chrome、Firefox等主流浏览器导出的书签格式
-              </p>
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            取消
-          </Button>
-          <Button onClick={handleImport} disabled={!fileContent || loading}>
-            {loading ? "导入中..." : "导入"}
-          </Button>
+            {/* <Input
+              id="import-html"
+              type="file"
+              accept=".html,.htm"
+              onChange={handleFileUpload}
+            /> */}
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="html-content">
+              或者，粘贴HTML内容
+            </Label>
+            <Input
+              id="html-content"
+              className="col-span-3"
+              value={htmlContent}
+              onChange={handleInputChange}
+            />
+          </div>
         </div>
+        <Button onClick={handleImport}>导入</Button>
       </DialogContent>
     </Dialog>
   );

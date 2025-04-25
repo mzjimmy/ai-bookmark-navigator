@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { BookmarkType } from "@/types/bookmark";
 import { useBookmarks } from "@/hooks/useBookmarks";
-import { getFaviconUrl } from "@/lib/utils";
+import { getFaviconUrl, getDomainFromUrl } from "@/lib/utils";
 
 interface BookmarkListProps {
   bookmarks: BookmarkType[];
@@ -137,8 +136,8 @@ const BookmarkList = ({ bookmarks, onDelete }: BookmarkListProps) => {
             <Card key={bookmark.id} className="overflow-hidden hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-2">
-                    <div className="h-6 w-6 rounded overflow-hidden flex items-center justify-center bg-gray-100">
+                  <div className="flex items-start space-x-2 flex-1 min-w-0">
+                    <div className="h-6 w-6 rounded overflow-hidden flex-shrink-0 flex items-center justify-center bg-gray-100">
                       <img 
                         src={getFaviconUrl(bookmark.url)} 
                         alt="" 
@@ -148,12 +147,14 @@ const BookmarkList = ({ bookmarks, onDelete }: BookmarkListProps) => {
                         }}
                       />
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <CardTitle className="text-base font-medium line-clamp-1">
                         {bookmark.title || "无标题"}
                       </CardTitle>
-                      <CardDescription className="text-xs truncate mt-1">
-                        {bookmark.url}
+                      <CardDescription className="text-xs mt-1 flex items-center">
+                        <span className="truncate">
+                          {getDomainFromUrl(bookmark.url)}
+                        </span>
                       </CardDescription>
                     </div>
                   </div>
@@ -161,7 +162,9 @@ const BookmarkList = ({ bookmarks, onDelete }: BookmarkListProps) => {
               </CardHeader>
               <CardContent className="pb-2">
                 {bookmark.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-2">{bookmark.description}</p>
+                  <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                    {bookmark.description}
+                  </p>
                 )}
                 <div className="flex flex-wrap gap-1 mt-2">
                   <Badge variant="outline" className="bg-blue-50">
@@ -185,11 +188,16 @@ const BookmarkList = ({ bookmarks, onDelete }: BookmarkListProps) => {
                   size="sm" 
                   className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                   onClick={() => window.open(bookmark.url, '_blank')}
+                  title={bookmark.url}
                 >
                   <ExternalLink size={16} className="mr-1" /> 访问
                 </Button>
                 <div className="flex">
-                  <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-gray-500 hover:text-gray-700"
+                  >
                     <Edit size={16} />
                   </Button>
                   <Button 
