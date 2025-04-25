@@ -1,12 +1,23 @@
 
+// Maximum number of HTML bookmarks to parse to avoid memory issues
+const MAX_HTML_BOOKMARKS = 500;
+
 export const parseHtmlBookmarks = (html: string) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const bookmarks: any[] = [];
 
   const traverse = (node: Element) => {
+    if (bookmarks.length >= MAX_HTML_BOOKMARKS) {
+      return; // Stop parsing if we've reached the limit
+    }
+    
     const links = node.getElementsByTagName('a');
     for (const link of Array.from(links)) {
+      if (bookmarks.length >= MAX_HTML_BOOKMARKS) {
+        break;
+      }
+      
       const bookmark = {
         title: link.textContent || 'Untitled',
         url: link.getAttribute('href') || '',
@@ -25,6 +36,9 @@ export const parseHtmlBookmarks = (html: string) => {
 
   const dts = doc.getElementsByTagName('dt');
   for (const dt of Array.from(dts)) {
+    if (bookmarks.length >= MAX_HTML_BOOKMARKS) {
+      break;
+    }
     traverse(dt);
   }
 

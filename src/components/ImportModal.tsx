@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, FileUp } from 'lucide-react';
+import { Upload, FileUp, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { parseHtmlBookmarks } from '@/utils/bookmarkParser';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileType, setFileType] = useState<'json' | 'html' | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isLargeFile, setIsLargeFile] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,6 +29,18 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
     setFileName(file.name);
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     setFileType(fileExtension === 'json' ? 'json' : 'html');
+    
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setIsLargeFile(true);
+      toast({
+        title: "警告",
+        description: "文件较大，处理可能需要一些时间，且可能无法导入全部书签。",
+        variant: "warning",
+      });
+    } else {
+      setIsLargeFile(false);
+    }
     
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -67,6 +81,7 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
       setFileContent(null);
       setFileName(null);
       setFileType(null);
+      setIsLargeFile(false);
       onClose();
     } catch (error) {
       toast({
@@ -94,6 +109,15 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
           </TabsList>
           
           <TabsContent value="file" className="py-4">
+            {isLargeFile && (
+              <Alert className="mb-4" variant="warning">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  文件较大，可能只会导入部分书签（最多100个）以避免存储空间不足。
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4">
               <Upload className="h-10 w-10 text-gray-400 mb-2" />
               <p className="text-sm text-gray-500 mb-2">

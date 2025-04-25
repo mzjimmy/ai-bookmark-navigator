@@ -1,10 +1,13 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { BookmarkType } from '@/types/bookmark';
 import { v4 as uuidv4 } from 'uuid';
+import { useToast } from '@/components/ui/use-toast';
+
+const MAX_BOOKMARKS = 100;
 
 export const useBookmarks = (searchQuery: string = '', categoryFilter: string = 'all') => {
   const [bookmarks, setBookmarks] = useState<BookmarkType[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Load bookmarks from localStorage on mount
@@ -20,8 +23,31 @@ export const useBookmarks = (searchQuery: string = '', categoryFilter: string = 
 
   useEffect(() => {
     // Save bookmarks to localStorage whenever they change
-    localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
-  }, [bookmarks]);
+    try {
+      // Limit the number of bookmarks to prevent exceeding quota
+      const limitedBookmarks = bookmarks.slice(0, MAX_BOOKMARKS);
+      
+      if (limitedBookmarks.length < bookmarks.length) {
+        toast({
+          title: "警告",
+          description: `书签数量已超过${MAX_BOOKMARKS}个，只保存最新的${MAX_BOOKMARKS}个书签。`,
+          variant: "destructive",
+        });
+        // Update state with limited bookmarks
+        setBookmarks(limitedBookmarks);
+        return;
+      }
+      
+      localStorage.setItem('bookmarks', JSON.stringify(limitedBookmarks));
+    } catch (error) {
+      console.error('Error saving bookmarks:', error);
+      toast({
+        title: "存储错误",
+        description: "无法保存书签到本地存储，请尝试减少书签数量或清理其他网站的存储空间。",
+        variant: "destructive",
+      });
+    }
+  }, [bookmarks, toast]);
 
   const addBookmark = (bookmark: Omit<BookmarkType, 'id' | 'createdAt'>) => {
     const newBookmark: BookmarkType = {
@@ -30,7 +56,14 @@ export const useBookmarks = (searchQuery: string = '', categoryFilter: string = 
       ...bookmark,
     };
     
-    setBookmarks(prev => [newBookmark, ...prev]);
+    setBookmarks(prev => {
+      // Ensure we don't exceed the maximum number of bookmarks
+      const updatedBookmarks = [newBookmark, ...prev];
+      if (updatedBookmarks.length > MAX_BOOKMARKS) {
+        return updatedBookmarks.slice(0, MAX_BOOKMARKS);
+      }
+      return updatedBookmarks;
+    });
   };
 
   const removeBookmark = (id: string) => {
@@ -56,7 +89,21 @@ export const useBookmarks = (searchQuery: string = '', categoryFilter: string = 
       createdAt: bookmark.createdAt || new Date().toISOString(),
     }));
     
-    setBookmarks(prev => [...formattedBookmarks, ...prev]);
+    // Limit the number of imported bookmarks to prevent quota issues
+    const limitedImportedBookmarks = formattedBookmarks.slice(0, MAX_BOOKMARKS);
+    
+    if (limitedImportedBookmarks.length < formattedBookmarks.length) {
+      toast({
+        title: "导入限制",
+        description: `只导入前${MAX_BOOKMARKS}个书签以避免存储空间不足。`,
+        variant: "warning",
+      });
+    }
+    
+    setBookmarks(prev => {
+      const combined = [...limitedImportedBookmarks, ...prev];
+      return combined.slice(0, MAX_BOOKMARKS);
+    });
   };
 
   const exportBookmarks = () => {
