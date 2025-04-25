@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import {
   Dialog,
@@ -10,8 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { parseHtmlBookmarks } from "@/utils/bookmarkParser";
-import { MAX_HTML_BOOKMARKS } from "@/utils/bookmarkParser";
+import { parseHtmlBookmarks, MAX_HTML_BOOKMARKS } from "@/utils/bookmarkParser";
 import { useDropzone } from 'react-dropzone';
 
 interface ImportModalProps {
@@ -39,9 +39,12 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
     reader.readAsText(file);
   }, []);
 
-  const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop, accept: {
-    'text/html': ['.html', '.htm'],
-  }})
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({
+    onDrop, 
+    accept: {
+      'text/html': ['.html', '.htm'],
+    }
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setHtmlContent(e.target.value);
@@ -146,12 +149,6 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
                   <p className="text-center">拖放文件到此处，或点击选择文件</p>
               }
             </div>
-            {/* <Input
-              id="import-html"
-              type="file"
-              accept=".html,.htm"
-              onChange={handleFileUpload}
-            /> */}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="html-content">
