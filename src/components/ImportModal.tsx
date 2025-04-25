@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload, FileUp } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { parseHtmlBookmarks } from '@/utils/bookmarkParser';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface ImportModalProps {
 const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<'json' | 'html' | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -23,6 +25,8 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
     if (!file) return;
 
     setFileName(file.name);
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    setFileType(fileExtension === 'json' ? 'json' : 'html');
     
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -46,21 +50,28 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
     setLoading(true);
     
     try {
-      const parsed = JSON.parse(fileContent);
-      onImport(parsed);
+      let bookmarks;
+      if (fileType === 'json') {
+        bookmarks = JSON.parse(fileContent);
+      } else {
+        bookmarks = parseHtmlBookmarks(fileContent);
+      }
+      
+      onImport(bookmarks);
       
       toast({
         title: "导入成功",
-        description: `已成功导入${parsed.length}个书签`,
+        description: `已成功导入${bookmarks.length}个书签`,
       });
       
       setFileContent(null);
       setFileName(null);
+      setFileType(null);
       onClose();
     } catch (error) {
       toast({
         title: "导入失败",
-        description: "文件格式不正确",
+        description: fileType === 'json' ? "JSON文件格式不正确" : "HTML文件格式不正确",
         variant: "destructive",
       });
       console.error("Import error:", error);
@@ -86,7 +97,7 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
             <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4">
               <Upload className="h-10 w-10 text-gray-400 mb-2" />
               <p className="text-sm text-gray-500 mb-2">
-                上传JSON格式的书签文件
+                上传JSON或HTML格式的书签文件
               </p>
               <label className="cursor-pointer">
                 <span className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors inline-flex items-center">
@@ -95,7 +106,7 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
                 </span>
                 <input
                   type="file"
-                  accept=".json"
+                  accept=".json,.html,.htm"
                   className="hidden"
                   onChange={handleFileChange}
                 />
@@ -112,28 +123,21 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
                 从浏览器导入书签需要以下步骤：
               </p>
               <ol className="text-left text-sm text-gray-600 space-y-2 pl-5 list-decimal mb-6">
-                <li>在浏览器中导出书签为HTML文件</li>
-                <li>使用转换工具将HTML转为JSON格式</li>
-                <li>在此处上传转换后的JSON文件</li>
+                <li>在浏览器书签管理器中选择"导出书签"</li>
+                <li>选择导出的HTML文件上传到这里</li>
               </ol>
               <p className="text-xs text-gray-500 mb-4">
-                由于浏览器安全限制，我们无法直接访问您的浏览器书签
+                支持Chrome、Firefox等主流浏览器导出的书签格式
               </p>
             </div>
           </TabsContent>
         </Tabs>
 
         <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={onClose}
-          >
+          <Button variant="outline" onClick={onClose}>
             取消
           </Button>
-          <Button
-            onClick={handleImport}
-            disabled={!fileContent || loading}
-          >
+          <Button onClick={handleImport} disabled={!fileContent || loading}>
             {loading ? "导入中..." : "导入"}
           </Button>
         </div>
