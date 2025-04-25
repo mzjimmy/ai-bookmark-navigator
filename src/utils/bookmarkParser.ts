@@ -1,6 +1,5 @@
-
 // Maximum number of HTML bookmarks to parse to avoid memory issues
-const MAX_HTML_BOOKMARKS = 500;
+const MAX_HTML_BOOKMARKS = 100;
 
 export const parseHtmlBookmarks = (html: string) => {
   const parser = new DOMParser();

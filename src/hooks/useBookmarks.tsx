@@ -89,14 +89,13 @@ export const useBookmarks = (searchQuery: string = '', categoryFilter: string = 
       createdAt: bookmark.createdAt || new Date().toISOString(),
     }));
     
-    // Limit the number of imported bookmarks to prevent quota issues
     const limitedImportedBookmarks = formattedBookmarks.slice(0, MAX_BOOKMARKS);
     
     if (limitedImportedBookmarks.length < formattedBookmarks.length) {
       toast({
         title: "导入限制",
         description: `只导入前${MAX_BOOKMARKS}个书签以避免存储空间不足。`,
-        variant: "warning",
+        variant: "destructive",
       });
     }
     

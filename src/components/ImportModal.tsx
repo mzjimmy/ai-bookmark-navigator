@@ -43,7 +43,7 @@ const ImportModal = ({ isOpen, onClose, onImport }: ImportModalProps) => {
     'text/html': ['.html', '.htm'],
   }})
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setHtmlContent(e.target.value);
   };
 
