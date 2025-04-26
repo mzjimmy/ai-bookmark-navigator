@@ -207,33 +207,54 @@ const BookmarkCard = ({ bookmark, onDelete, onUpdate, onPinToggle }: BookmarkCar
   
   // 正常显示模式
   return (
-    <Card className={`overflow-hidden hover:shadow-md transition-shadow ${bookmark.isPinned ? 'border-blue-400 border-2' : ''}`}>
+    <Card className={`overflow-hidden hover:shadow-lg transition-all duration-200 ${bookmark.isPinned ? 'border-blue-400 border-2' : ''}`}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-2 flex-1 min-w-0">
-            <div className="h-6 w-6 rounded overflow-hidden flex-shrink-0 flex items-center justify-center bg-gray-100">
-              <img 
-                src={getFaviconUrl(bookmark.url)} 
-                alt="" 
-                className="h-4 w-4"
-                loading="lazy"
-                onLoad={(e) => {
-                  // 图标加载成功，缓存URL
-                  const imgElement = e.target as HTMLImageElement;
-                  if (imgElement.src && !imgElement.src.includes('placeholder.svg')) {
-                    cacheFaviconUrl(bookmark.url, imgElement.src);
-                  }
-                }}
-                onError={(e) => {
-                  console.log(`Favicon加载失败: ${bookmark.url}，使用占位图`);
-                  (e.target as HTMLImageElement).src = '/placeholder.svg';
-                  // 防止循环重试
-                  (e.target as HTMLImageElement).onerror = null;
-                }}
-              />
+            <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center bg-gray-100 border border-gray-200">
+              {/* Favicon加载状态 */}
+              <div className="relative w-full h-full flex items-center justify-center">
+                {/* 加载中状态指示器 */}
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-0">
+                  <span className="animate-pulse w-4 h-4 rounded-full bg-gray-200"></span>
+                </div>
+                
+                <img 
+                  src={getFaviconUrl(bookmark.url)} 
+                  alt="" 
+                  className="h-5 w-5 relative z-10 object-contain"
+                  loading="lazy"
+                  onLoad={(e) => {
+                    // 图标加载成功，缓存URL
+                    const imgElement = e.target as HTMLImageElement;
+                    const loadTime = performance.now();
+                    console.log('Favicon加载状态:', {
+                      url: bookmark.url, 
+                      status: 'success', 
+                      source: imgElement.src.includes('google.com/s2') ? 'google_service' : 'site_favicon',
+                      loadTime: Math.round(loadTime)
+                    });
+                    
+                    if (imgElement.src && !imgElement.src.includes('placeholder.svg')) {
+                      cacheFaviconUrl(bookmark.url, imgElement.src);
+                    }
+                  }}
+                  onError={(e) => {
+                    console.log('Favicon加载状态:', {
+                      url: bookmark.url, 
+                      status: 'error', 
+                      errorType: 'load_failure',
+                      loadTime: Math.round(performance.now())
+                    });
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    // 防止循环重试
+                    (e.target as HTMLImageElement).onerror = null;
+                  }}
+                />
+              </div>
             </div>
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-base font-medium line-clamp-1">
+              <CardTitle className="text-base font-medium line-clamp-1 group-hover:text-blue-600 transition-colors">
                 {bookmark.title || "无标题"}
                 {bookmark.isPinned && (
                   <PinIcon className="inline-block ml-1 h-3 w-3 text-blue-500" />
@@ -250,21 +271,21 @@ const BookmarkCard = ({ bookmark, onDelete, onUpdate, onPinToggle }: BookmarkCar
       </CardHeader>
       <CardContent className="pb-2">
         {bookmark.description && (
-          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+          <p className="text-sm text-gray-600 line-clamp-2 mb-2 hover:line-clamp-none transition-all duration-300">
             {bookmark.description}
           </p>
         )}
         <div className="flex flex-wrap gap-1 mt-2">
-          <Badge variant="outline" className="bg-blue-50">
+          <Badge variant="outline" className="bg-blue-50 hover:bg-blue-100 transition-colors">
             {bookmark.category || '未分类'}
           </Badge>
           {bookmark.tags?.slice(0, 2).map((tag, i) => (
-            <Badge key={i} variant="secondary" className="text-xs">
+            <Badge key={i} variant="secondary" className="text-xs hover:bg-gray-200 transition-colors">
               {tag}
             </Badge>
           ))}
           {(bookmark.tags?.length || 0) > 2 && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs hover:bg-gray-200 transition-colors">
               +{(bookmark.tags?.length || 0) - 2}
             </Badge>
           )}
@@ -308,24 +329,31 @@ const BookmarkCard = ({ bookmark, onDelete, onUpdate, onPinToggle }: BookmarkCar
           <Button 
             variant="ghost" 
             size="sm"
-            className="h-8 w-8 p-0 text-gray-500"
+            className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
             onClick={handleEditClick}
+            onMouseEnter={() => console.log('书签卡片交互:', {bookmarkId: bookmark.id, interactionType: 'hover_edit'})}
           >
             <Edit size={16} />
           </Button>
           <Button 
             variant="ghost" 
             size="sm"
-            className="h-8 w-8 p-0 text-gray-500"
-            onClick={() => onDelete(bookmark.id)}
+            className="h-8 w-8 p-0 text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+            onClick={() => {
+              console.log('书签卡片交互:', {bookmarkId: bookmark.id, interactionType: 'delete'});
+              onDelete(bookmark.id);
+            }}
           >
             <Trash2 size={16} />
           </Button>
           <Button 
             variant="ghost" 
             size="sm"
-            className={`h-8 w-8 p-0 ${bookmark.isPinned ? 'text-blue-500' : 'text-gray-500'}`}
-            onClick={handlePinToggle}
+            className={`h-8 w-8 p-0 ${bookmark.isPinned ? 'text-blue-500' : 'text-gray-500'} hover:text-blue-600 hover:bg-blue-50 transition-colors`}
+            onClick={() => {
+              console.log('书签卡片交互:', {bookmarkId: bookmark.id, interactionType: 'toggle_pin'});
+              handlePinToggle();
+            }}
           >
             <PinIcon size={16} />
           </Button>
@@ -333,8 +361,11 @@ const BookmarkCard = ({ bookmark, onDelete, onUpdate, onPinToggle }: BookmarkCar
         <Button 
           variant="ghost" 
           size="sm"
-          className="text-blue-600"
-          onClick={handleVisit}
+          className="text-blue-600 hover:bg-blue-100 transition-colors"
+          onClick={() => {
+            console.log('书签卡片交互:', {bookmarkId: bookmark.id, interactionType: 'visit'});
+            handleVisit();
+          }}
         >
           <ExternalLink size={16} className="mr-1" /> 
           访问
