@@ -1,0 +1,67 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 架构图
+
+AI书签导航是一款本地书签管理应用，按照架构图划分为以下几个主要层级：
+
+## 界面层
+
+- **首页**：主要用户界面，包含书签预览和管理功能
+  - [src/pages/Index.tsx](mdc:src/pages/Index.tsx)
+  
+- **快速检索控件**：提供书签搜索和过滤能力
+  - 包含在[src/pages/Index.tsx](mdc:src/pages/Index.tsx)中的搜索框
+  
+- **书签卡片组**：显示书签的主要区域
+  - [src/components/BookmarkList.tsx](mdc:src/components/BookmarkList.tsx)
+  - [src/components/BookmarkCard.tsx](mdc:src/components/BookmarkCard.tsx)
+
+- **管理员入口**：提供书签管理功能
+  - 包含在[src/components/Sidebar.tsx](mdc:src/components/Sidebar.tsx)中
+
+## 智能分析平台
+
+- **社区分类规则**：基于用户书签自动推荐分类
+  - [src/hooks/useAI.tsx](mdc:src/hooks/useAI.tsx)中的分类建议功能
+  
+- **三维标签云**：提供书签标签的可视化展示
+  - 计划在[src/components/AIAnalysisPanel.tsx](mdc:src/components/AIAnalysisPanel.tsx)中实现
+
+- **爬虫生成卡片**：自动为书签生成预览卡片
+  - 计划在[src/hooks/useAI.tsx](mdc:src/hooks/useAI.tsx)中实现网页预览功能
+
+## 数据管理中心
+
+- **变更副本生成器**：跟踪书签变更历史
+  - 计划在[src/hooks/useBookmarks.tsx](mdc:src/hooks/useBookmarks.tsx)中实现变更历史功能
+  
+- **数据管理控制台**：管理书签数据
+  - 包含在[src/components/Sidebar.tsx](mdc:src/components/Sidebar.tsx)中的管理功能
+
+## 本地数据存储
+
+- **IndexedDB**：计划用于大量书签数据的本地存储
+  - 计划从LocalStorage迁移到IndexedDB
+  
+- **LocalStorage**：当前用于存储书签数据
+  - [src/hooks/useBookmarks.tsx](mdc:src/hooks/useBookmarks.tsx)中的本地存储实现
+  
+- **文件系统API**：用于书签导入导出
+  - [src/components/ImportModal.tsx](mdc:src/components/ImportModal.tsx)中的文件导入功能
+
+## 业务处理引擎
+
+- **网页域名解析器**：解析书签URL信息
+  - [src/hooks/useAI.tsx](mdc:src/hooks/useAI.tsx)中的域名分析功能
+  
+- **AI内容分析检测**：分析书签内容和关系
+  - [src/hooks/useAI.tsx](mdc:src/hooks/useAI.tsx)中的分析功能
+  
+- **社区网址推荐器**：基于用户书签推荐相关网址
+  - 计划在[src/hooks/useAI.tsx](mdc:src/hooks/useAI.tsx)中实现推荐功能
+  
+- **智能去重核心**：检测并合并重复书签
+  - 计划在[src/hooks/useBookmarks.tsx](mdc:src/hooks/useBookmarks.tsx)中实现

@@ -1,0 +1,42 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 功能模块
+
+AI书签导航应用包含以下主要功能模块：
+
+## 书签管理模块
+
+- **书签存储**: 使用LocalStorage实现本地持久化
+- **书签导入/导出**: 支持HTML和JSON格式的书签导入导出
+- **书签CRUD**: 完整的创建、读取、更新、删除功能
+- **书签过滤与搜索**: 基于类别和搜索词过滤书签
+
+相关文件:
+- [src/hooks/useBookmarks.tsx](mdc:src/hooks/useBookmarks.tsx) - 书签管理钩子
+- [src/components/BookmarkList.tsx](mdc:src/components/BookmarkList.tsx) - 书签列表显示
+- [src/components/AddBookmarkModal.tsx](mdc:src/components/AddBookmarkModal.tsx) - 添加书签
+
+## AI分析模块
+
+- **书签分类分析**: 分析书签分类分布
+- **域名分析**: 分析最常访问的域名
+- **书签洞察**: 生成基于书签集合的洞察
+- **分类推荐**: 为未分类书签推荐合适的分类
+
+相关文件:
+- [src/hooks/useAI.tsx](mdc:src/hooks/useAI.tsx) - AI分析钩子
+- [src/components/AIAnalysisPanel.tsx](mdc:src/components/AIAnalysisPanel.tsx) - AI分析显示面板
+
+## 用户界面模块
+
+- **响应式布局**: 适配桌面和移动设备
+- **侧边栏导航**: 基于类别的书签导航
+- **主题和样式**: 使用TailwindCSS实现现代UI
+
+相关文件:
+- [src/components/Sidebar.tsx](mdc:src/components/Sidebar.tsx) - 侧边栏组件
+- [src/hooks/use-mobile.tsx](mdc:src/hooks/use-mobile.tsx) - 移动设备检测
+- [src/index.css](mdc:src/index.css) - 全局样式

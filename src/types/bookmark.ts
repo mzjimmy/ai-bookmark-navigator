@@ -1,4 +1,3 @@
-
 export interface BookmarkType {
   id: string;
   title: string;
@@ -7,4 +6,8 @@ export interface BookmarkType {
   category?: string;
   tags?: string[];
   createdAt: string;
+  lastVisited?: string;
+  visitCount?: number;
+  isPinned?: boolean;
+  position?: number;
 }

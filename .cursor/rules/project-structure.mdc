@@ -1,0 +1,33 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 项目结构
+
+AI书签导航是一款本地浏览器书签管理应用，具有AI分析功能。
+
+## 核心文件结构
+
+- [src/main.tsx](mdc:src/main.tsx) - 应用的入口点
+- [src/App.tsx](mdc:src/App.tsx) - 主应用组件，包含路由配置
+- [src/pages/Index.tsx](mdc:src/pages/Index.tsx) - 主页面，包含书签列表和AI分析面板
+
+## 组件目录
+
+- [src/components/BookmarkList.tsx](mdc:src/components/BookmarkList.tsx) - 书签列表组件
+- [src/components/BookmarkCard.tsx](mdc:src/components/BookmarkCard.tsx) - 单个书签卡片组件
+- [src/components/Sidebar.tsx](mdc:src/components/Sidebar.tsx) - 侧边栏组件
+- [src/components/ImportModal.tsx](mdc:src/components/ImportModal.tsx) - 导入书签模态框
+- [src/components/AddBookmarkModal.tsx](mdc:src/components/AddBookmarkModal.tsx) - 添加书签模态框
+- [src/components/AIAnalysisPanel.tsx](mdc:src/components/AIAnalysisPanel.tsx) - AI分析面板组件
+
+## 功能钩子
+
+- [src/hooks/useBookmarks.tsx](mdc:src/hooks/useBookmarks.tsx) - 书签管理功能钩子
+- [src/hooks/useAI.tsx](mdc:src/hooks/useAI.tsx) - AI分析功能钩子
+
+## 工具和类型
+
+- [src/utils/bookmarkParser.ts](mdc:src/utils/bookmarkParser.ts) - 书签解析工具
+- [src/types/bookmark.ts](mdc:src/types/bookmark.ts) - 书签类型定义

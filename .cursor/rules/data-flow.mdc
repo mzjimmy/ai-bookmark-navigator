@@ -1,0 +1,45 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 数据流
+
+AI书签导航应用的数据流按照以下路径流动：
+
+## 书签数据流
+
+1. **数据存储**：书签数据使用LocalStorage在浏览器本地持久化
+   - 相关文件: [src/hooks/useBookmarks.tsx](mdc:src/hooks/useBookmarks.tsx)
+
+2. **数据导入**：
+   - 用户通过ImportModal导入书签文件
+   - 使用bookmarkParser解析HTML或JSON格式书签
+   - 解析后的书签被添加到状态管理中
+   - 相关文件: [src/components/ImportModal.tsx](mdc:src/components/ImportModal.tsx), [src/utils/bookmarkParser.ts](mdc:src/utils/bookmarkParser.ts)
+
+3. **数据展示**：
+   - 书签数据从useBookmarks钩子流向BookmarkList组件
+   - 可基于搜索和类别过滤
+   - 相关文件: [src/components/BookmarkList.tsx](mdc:src/components/BookmarkList.tsx)
+
+4. **数据修改**：
+   - 通过AddBookmarkModal添加新书签
+   - 通过BookmarkCard组件修改或删除书签
+   - 所有数据变更通过useBookmarks钩子处理
+   - 相关文件: [src/components/AddBookmarkModal.tsx](mdc:src/components/AddBookmarkModal.tsx), [src/components/BookmarkCard.tsx](mdc:src/components/BookmarkCard.tsx)
+
+## AI分析数据流
+
+1. **分析触发**：
+   - 用户在AI分析面板点击分析按钮
+   - 相关文件: [src/components/AIAnalysisPanel.tsx](mdc:src/components/AIAnalysisPanel.tsx)
+
+2. **数据处理**：
+   - 当前书签集合传递给useAI钩子进行处理
+   - 生成分类统计、域名分析、洞察和推荐
+   - 相关文件: [src/hooks/useAI.tsx](mdc:src/hooks/useAI.tsx)
+
+3. **结果展示**：
+   - 分析结果通过AIAnalysisPanel组件展示给用户
+   - 相关文件: [src/components/AIAnalysisPanel.tsx](mdc:src/components/AIAnalysisPanel.tsx)

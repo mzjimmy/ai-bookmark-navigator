@@ -1,73 +1,94 @@
-# Welcome to your Lovable project
+# AI书签导航器 (AI Bookmark Navigator)
 
-## Project info
+AI书签导航器是一款基于现代Web技术开发的本地书签管理应用，集成AI分析功能，帮助用户更高效地管理和分析他们的网络收藏。
 
-**URL**: https://lovable.dev/projects/a6ea8353-89be-46e9-97e7-705b42d6e58e
+## 功能特点
 
-## How can I edit this code?
+- **本地存储**: 所有书签数据存储在浏览器本地，保护用户隐私
+- **智能分析**: 借助AI技术分析书签集合，提供分类建议和内容洞察
+- **书签导入/导出**: 支持从主流浏览器导入书签，也可导出为多种格式
+- **高级搜索**: 基于标题、URL、描述和标签的快速搜索功能
+- **分类管理**: 自动和手动分类，帮助组织大量书签
+- **响应式设计**: 完美适配桌面和移动设备的用户体验
 
-There are several ways of editing your application.
+## 技术栈
 
-**Use Lovable**
+- **前端框架**: React + TypeScript
+- **UI组件**: shadcn-ui + TailwindCSS
+- **构建工具**: Vite
+- **状态管理**: React hooks + Context API
+- **数据存储**: LocalStorage (计划迁移至IndexedDB)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a6ea8353-89be-46e9-97e7-705b42d6e58e) and start prompting.
+## 快速开始
 
-Changes made via Lovable will be committed automatically to this repo.
+### 安装依赖
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm install
+# 或
+yarn install
 ```
 
-**Edit a file directly in GitHub**
+### 本地开发
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run dev
+# 或
+yarn dev
+```
 
-**Use GitHub Codespaces**
+### 构建生产版本
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+npm run build
+# 或
+yarn build
+```
 
-## What technologies are used for this project?
+## 项目结构
 
-This project is built with:
+```
+src/
+├── components/      # UI组件
+├── hooks/           # 自定义React钩子
+├── lib/             # 工具库
+├── pages/           # 页面组件
+├── types/           # TypeScript类型定义
+├── utils/           # 工具函数
+└── App.tsx          # 应用入口
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 主要功能模块
 
-## How can I deploy this project?
+### 书签管理
 
-Simply open [Lovable](https://lovable.dev/projects/a6ea8353-89be-46e9-97e7-705b42d6e58e) and click on Share -> Publish.
+- 添加、编辑、删除书签
+- 根据类别和标签组织书签
+- 从浏览器导入HTML格式书签
+- 导出为JSON格式
 
-## Can I connect a custom domain to my Lovable project?
+### AI分析
 
-Yes, you can!
+- 自动分析书签集合
+- 提供主题和兴趣洞察
+- 为未分类书签推荐分类
+- 分析常访问域名和使用模式
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 路线图
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+项目计划功能：
+
+- [ ] 迁移到IndexedDB以支持更大规模的书签存储
+- [ ] 集成真实AI API进行更深入的内容分析
+- [ ] 添加标签云可视化功能
+- [ ] 实现书签变更历史记录
+- [ ] 添加自动获取网站favicon和页面预览功能
+- [ ] 支持多设备同步
+
+## 贡献指南
+
+欢迎贡献代码或提出建议！请查看[TASKS.md](./TASKS.md)了解当前开发任务和计划。
+
+## 许可证
+
+MIT

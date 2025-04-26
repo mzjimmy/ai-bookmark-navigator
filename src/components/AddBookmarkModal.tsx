@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,11 +8,11 @@ import { BookmarkType } from "@/types/bookmark";
 
 interface AddBookmarkModalProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (bookmark: Omit<BookmarkType, 'id' | 'createdAt'>) => void;
+  onClose: () => void;
+  onAdd: (bookmark: Omit<BookmarkType, 'id' | 'createdAt'>) => void;
 }
 
-const AddBookmarkModal = ({ isOpen, onOpenChange, onSubmit }: AddBookmarkModalProps) => {
+const AddBookmarkModal = ({ isOpen, onClose, onAdd }: AddBookmarkModalProps) => {
   const [newBookmark, setNewBookmark] = useState({
     title: "",
     url: "",
@@ -25,7 +24,7 @@ const AddBookmarkModal = ({ isOpen, onOpenChange, onSubmit }: AddBookmarkModalPr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const tags = newBookmark.tags.split(",").map(tag => tag.trim()).filter(Boolean);
-    onSubmit({
+    onAdd({
       ...newBookmark,
       tags
     });
@@ -36,11 +35,17 @@ const AddBookmarkModal = ({ isOpen, onOpenChange, onSubmit }: AddBookmarkModalPr
       category: "未分类",
       tags: ""
     });
-    onOpenChange(false);
+    onClose();
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>添加新书签</DialogTitle>
@@ -94,7 +99,7 @@ const AddBookmarkModal = ({ isOpen, onOpenChange, onSubmit }: AddBookmarkModalPr
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={onClose}>
               取消
             </Button>
             <Button type="submit">添加</Button>

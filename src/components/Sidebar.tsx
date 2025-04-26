@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -21,6 +20,12 @@ const Sidebar = ({
   onImportClick 
 }: SidebarProps) => {
   const { exportBookmarks } = useBookmarks();
+  
+  console.log('Sidebar组件渲染:', { 
+    categoriesCount: categories.length, 
+    categories: categories,
+    selectedCategory
+  });
   
   const handleExport = () => {
     const bookmarksBlob = exportBookmarks();
