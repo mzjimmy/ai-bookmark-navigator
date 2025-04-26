@@ -3,8 +3,9 @@ import Sidebar from "@/components/Sidebar";
 import BookmarkList from "@/components/BookmarkList";
 import ImportModal from "@/components/ImportModal";
 import AIAnalysisPanel from "@/components/AIAnalysisPanel";
+import NormalizeNameModal from "@/components/NormalizeNameModal";
 import { Button } from "@/components/ui/button";
-import { Search, Database, ArrowUpDown, Pin as PinIcon } from "lucide-react";
+import { Search, Database, ArrowUpDown, Pin as PinIcon, Text, Brain } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBookmarks, SortOption } from "@/hooks/useBookmarks";
@@ -16,8 +17,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// 排序选项
+const sortOptions = [
+  { value: 'pinned', label: '置顶优先' },
+  { value: 'newest', label: '最新添加' },
+  { value: 'oldest', label: '最早添加' },
+  { value: 'title-asc', label: '标题升序' },
+  { value: 'title-desc', label: '标题降序' },
+  { value: 'visits', label: '访问次数' },
+  { value: 'last-visited', label: '最近访问' },
+];
+
 const Index = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isNormalizeModalOpen, setIsNormalizeModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortOption, setSortOption] = useState<SortOption>("pinned");
@@ -44,73 +57,82 @@ const Index = () => {
     pinnedCount: bookmarks.filter(b => b.isPinned).length
   });
 
-  // 排序选项映射
-  const sortOptions = [
-    { value: 'pinned', label: '置顶优先' },
-    { value: 'newest', label: '最新添加' },
-    { value: 'oldest', label: '最早添加' },
-    { value: 'title-asc', label: '标题 A-Z' },
-    { value: 'title-desc', label: '标题 Z-A' },
-    { value: 'visits', label: '访问次数' },
-    { value: 'last-visited', label: '最近访问' },
-  ];
+  // 处理分类选择
+  const handleCategorySelect = (category: string) => {
+    console.log('选择分类:', { category, previousCategory: selectedCategory });
+    setSelectedCategory(category);
+  };
 
-  useEffect(() => {
-    // Check if the app has been initialized before
-    const initialized = localStorage.getItem("app_initialized");
-    if (!initialized) {
-      toast({
-        title: "欢迎使用AI书签管理器",
-        description: "请导入您的书签或开始添加新书签",
+  // 处理导入
+  const handleImport = (importedBookmarks: Omit<BookmarkType, 'id' | 'createdAt'>[]) => {
+    console.log('导入书签:', { count: importedBookmarks.length });
+    importBookmarks(importedBookmarks)
+      .then((count) => {
+        toast({
+          title: "导入成功",
+          description: `已导入 ${count} 个书签`,
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: "导入失败",
+          description: error.message,
+          variant: "destructive",
+        });
       });
-      localStorage.setItem("app_initialized", "true");
-    }
+  };
+
+  // 处理排序变更
+  const handleSortChange = (newSortOption: SortOption) => {
+    console.log('更改排序选项:', { from: sortOption, to: newSortOption });
+    setSortOption(newSortOption);
+  };
+
+  // 处理AI分析
+  const handleAnalyze = () => {
+    console.log('开始AI分析');
+    analyzeBookmarks(bookmarks);
+  };
+
+  // 处理名称规范化
+  const handleNormalizeNames = () => {
+    console.log('打开名称规范化对话框');
+    setIsNormalizeModalOpen(true);
+  };
+
+  // 应用规范化后的书签
+  const handleNormalizeComplete = (updatedBookmarks: BookmarkType[]) => {
+    console.log('应用名称规范化结果:', { updatedBookmarksCount: updatedBookmarks.length });
     
-    // 检查并提示用户IndexedDB迁移
-    const migrated = localStorage.getItem("indexeddb_migration_complete");
-    if (migrated === 'true') {
-      toast({
-        title: "存储升级完成",
-        description: "书签数据已升级至IndexedDB，现在可以存储更多书签！",
-        icon: <Database className="h-4 w-4" />
+    // 批量更新书签
+    const updatePromises = updatedBookmarks
+      .filter((bookmark, index) => bookmark.title !== bookmarks[index].title)
+      .map(bookmark => updateBookmark(bookmark.id, { title: bookmark.title }));
+    
+    Promise.all(updatePromises)
+      .then(() => {
+        toast({
+          title: "规范化完成",
+          description: `已更新 ${updatePromises.length} 个书签标题`,
+        });
+        refreshBookmarks();
+      })
+      .catch(error => {
+        toast({
+          title: "规范化应用失败",
+          description: error.message,
+          variant: "destructive",
+        });
       });
-    }
-  }, [toast]);
-
-  // 处理排序选项变更
-  const handleSortChange = (value: SortOption) => {
-    console.log(`排序选项变更为: ${value}`);
-    setSortOption(value);
-  };
-
-  // 处理书签更新
-  const handleBookmarkUpdate = (id: string, updatedFields: any) => {
-    console.log('处理书签更新:', { bookmarkId: id, updatedFields });
-    updateBookmark(id, updatedFields);
-  };
-  
-  // 处理书签置顶状态变更
-  const handleBookmarkPinToggle = (id: string, isPinned: boolean) => {
-    console.log('处理书签置顶状态变更:', { bookmarkId: id, isPinned });
-    // 如果当前不是按置顶排序，切换到置顶排序
-    if (sortOption !== 'pinned') {
-      setSortOption('pinned');
-      toast({
-        title: "已切换到置顶排序",
-        description: "已自动切换到置顶优先排序，以便更好地查看置顶书签。",
-      });
-    }
-    // 刷新书签列表
-    refreshBookmarks();
   };
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-white">
+    <div className="flex h-screen bg-slate-50">
       <Sidebar 
         categories={categories} 
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-        onImportClick={() => setIsImportModalOpen(true)}
+        selectedCategory={selectedCategory} 
+        onSelectCategory={handleCategorySelect}
+        onImport={() => setIsImportModalOpen(true)}
       />
       
       <div className="flex-1 p-4 md:p-6 overflow-hidden">
@@ -140,6 +162,22 @@ const Index = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* AI功能下拉菜单 */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9">
+                    <Brain className="mr-2 h-4 w-4" />
+                    AI功能
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleNormalizeNames}>
+                    <Text className="mr-2 h-4 w-4" />
+                    <span>规范化书签名称</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               {/* 搜索框 */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -153,38 +191,53 @@ const Index = () => {
               </div>
             </div>
           </div>
-          
-          <Tabs defaultValue="bookmarks" className="w-full">
-            <TabsList>
-              <TabsTrigger value="bookmarks">书签列表</TabsTrigger>
-              <TabsTrigger value="analysis">智能分析</TabsTrigger>
-            </TabsList>
-            <TabsContent value="bookmarks" className="mt-4">
-              <BookmarkList 
-                bookmarks={filteredBookmarks} 
-                onDelete={removeBookmark}
-                onUpdate={handleBookmarkUpdate}
-                isLoading={isLoading}
-                onRefresh={refreshBookmarks}
-              />
-            </TabsContent>
-            <TabsContent value="analysis" className="mt-4">
-              <AIAnalysisPanel 
-                bookmarks={bookmarks}
-                aiSuggestions={aiSuggestions}
-                onAnalyze={() => analyzeBookmarks(bookmarks)}
-                analyzing={analyzing || isLoading}
-                error={error}
-              />
-            </TabsContent>
-          </Tabs>
         </header>
+
+        <Tabs defaultValue="bookmarks" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="bookmarks" className="relative">
+              书签列表
+              <span className="ml-1 text-xs text-gray-500">({filteredBookmarks.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="analysis">
+              AI分析
+              {analyzing && <span className="ml-1 text-xs text-blue-500">(分析中...)</span>}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="bookmarks" className="space-y-4">
+            <BookmarkList 
+              bookmarks={filteredBookmarks}
+              onDelete={removeBookmark}
+              onUpdate={updateBookmark}
+              isLoading={isLoading}
+              onRefresh={refreshBookmarks}
+            />
+          </TabsContent>
+          
+          <TabsContent value="analysis" className="space-y-6">
+            <AIAnalysisPanel 
+              bookmarks={bookmarks}
+              aiSuggestions={aiSuggestions}
+              onAnalyze={handleAnalyze}
+              analyzing={analyzing}
+              error={error}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <ImportModal 
-        isOpen={isImportModalOpen} 
+        isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        onImport={importBookmarks}
+        onImport={handleImport}
+      />
+
+      <NormalizeNameModal
+        isOpen={isNormalizeModalOpen}
+        onClose={() => setIsNormalizeModalOpen(false)}
+        bookmarks={bookmarks}
+        onNormalizeComplete={handleNormalizeComplete}
       />
     </div>
   );

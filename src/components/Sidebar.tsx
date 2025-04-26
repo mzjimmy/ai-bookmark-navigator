@@ -7,17 +7,17 @@ import { useBookmarks } from "@/hooks/useBookmarks";
 import { saveAs } from "file-saver";
 
 interface SidebarProps {
-  categories: { name: string; count: number }[];
+  categories: string[];
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
-  onImportClick: () => void;
+  onImport: () => void;
 }
 
 const Sidebar = ({ 
   categories, 
   selectedCategory, 
   onSelectCategory,
-  onImportClick 
+  onImport 
 }: SidebarProps) => {
   const { exportBookmarks } = useBookmarks();
   
@@ -44,7 +44,7 @@ const Sidebar = ({
           <Button 
             variant="outline"
             className="w-full justify-start gap-2" 
-            onClick={onImportClick}
+            onClick={onImport}
           >
             <Upload size={18} />
             导入书签
