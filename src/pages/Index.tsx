@@ -34,7 +34,7 @@ const Index = () => {
     toggleBookmarkPinStatus,
     refreshBookmarks
   } = useBookmarks(searchQuery, selectedCategory, sortOption);
-  const { analyzing, analyzeBookmarks, aiSuggestions } = useAI();
+  const { analyzing, analyzeBookmarks, aiSuggestions, error } = useAI();
 
   console.log('Index组件渲染:', { 
     bookmarksCount: bookmarks.length, 
@@ -174,6 +174,7 @@ const Index = () => {
                 aiSuggestions={aiSuggestions}
                 onAnalyze={() => analyzeBookmarks(bookmarks)}
                 analyzing={analyzing || isLoading}
+                error={error}
               />
             </TabsContent>
           </Tabs>

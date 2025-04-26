@@ -1,9 +1,10 @@
-
 import { useState } from 'react';
 import { BookmarkType } from '@/types/bookmark';
+import { OpenRouterClient, createOpenRouterClient } from '@/services/openRouter';
 
 export const useAI = () => {
   const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [aiSuggestions, setAiSuggestions] = useState<{
     categories?: { name: string; count: number }[];
     topDomains?: { domain: string; count: number }[];
@@ -11,67 +12,95 @@ export const useAI = () => {
     categoryRecommendations?: { bookmarkId: string; categories: string[] }[];
   }>({});
 
+  // 创建OpenRouter客户端实例
+  const openRouter = createOpenRouterClient();
+
   const analyzeBookmarks = async (bookmarks: BookmarkType[]) => {
     if (bookmarks.length === 0) return;
     
     setAnalyzing(true);
+    setError(null);
     
     try {
-      // 在真实情况下，这里会调用一个AI API，但目前我们模拟AI分析结果
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('开始AI分析书签:', { bookmarkCount: bookmarks.length });
       
-      // 计算分类数据
-      const categoryMap: Record<string, number> = {};
-      bookmarks.forEach(bookmark => {
-        const category = bookmark.category || '未分类';
-        categoryMap[category] = (categoryMap[category] || 0) + 1;
-      });
+      // 从传入的书签数据中提取分析所需的数据
+      const bookmarksToAnalyze = bookmarks.map(bookmark => ({
+        id: bookmark.id,
+        title: bookmark.title,
+        url: bookmark.url,
+        category: bookmark.category || '未分类',
+        description: bookmark.description,
+        tags: bookmark.tags,
+      }));
       
-      const categories = Object.entries(categoryMap)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count);
+      // 调用OpenRouter API进行真实AI分析
+      const analysisResult = await openRouter.analyzeBookmarks(bookmarksToAnalyze);
+      console.log('AI分析结果:', { responseData: analysisResult, processingTime: Date.now() });
       
-      // 计算顶级域名
-      const domainMap: Record<string, number> = {};
-      bookmarks.forEach(bookmark => {
-        try {
-          const url = new URL(bookmark.url);
-          const domain = url.hostname.replace('www.', '');
-          domainMap[domain] = (domainMap[domain] || 0) + 1;
-        } catch (error) {
-          // 处理无效URL
-        }
-      });
-      
-      const topDomains = Object.entries(domainMap)
-        .map(([domain, count]) => ({ domain, count }))
-        .sort((a, b) => b.count - a.count);
-      
-      // 生成洞察
-      const insights = [
-        `您的书签集中在 ${categories[0]?.name} 和 ${categories[1]?.name} 领域，显示出您的主要关注点。`,
-        `您最常访问的网站是 ${topDomains[0]?.domain}，占您所有书签的 ${Math.round(topDomains[0]?.count * 100 / bookmarks.length)}%。`,
-        `有 ${bookmarks.filter(b => !b.description).length} 个书签缺少描述，添加描述可以提高搜索效果。`,
-        `根据您的浏览模式，您可能对 ${generateRandomInterests(categories)} 相关内容感兴趣。`,
-      ];
-      
-      // 生成分类推荐
-      const categoryRecommendations = bookmarks
-        .filter(b => b.category === '未分类' || !b.category)
-        .slice(0, 3)
-        .map(bookmark => ({
-          bookmarkId: bookmark.id,
-          categories: suggestCategoriesForBookmark(bookmark, categories.map(c => c.name)),
-        }));
-      
-      setAiSuggestions({
-        categories,
-        topDomains,
-        insights,
-        categoryRecommendations,
-      });
+      // 根据AI分析结果格式化数据
+      // 这部分可能需要根据实际API返回结果进行调整
+      try {
+        // 尝试解析AI返回的结果
+        // 在实际实现中，我们可能需要添加更复杂的解析逻辑
+        // 或者修改AI提示让它返回特定格式的JSON
+        
+        // 计算分类数据
+        const categoryMap: Record<string, number> = {};
+        bookmarks.forEach(bookmark => {
+          const category = bookmark.category || '未分类';
+          categoryMap[category] = (categoryMap[category] || 0) + 1;
+        });
+        
+        const categories = Object.entries(categoryMap)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count);
+        
+        // 计算顶级域名
+        const domainMap: Record<string, number> = {};
+        bookmarks.forEach(bookmark => {
+          try {
+            const url = new URL(bookmark.url);
+            const domain = url.hostname.replace('www.', '');
+            domainMap[domain] = (domainMap[domain] || 0) + 1;
+          } catch (error) {
+            // 处理无效URL
+          }
+        });
+        
+        const topDomains = Object.entries(domainMap)
+          .map(([domain, count]) => ({ domain, count }))
+          .sort((a, b) => b.count - a.count);
+        
+        // 使用AI返回的分析作为洞察
+        const insights = [analysisResult];
+        
+        // 提取AI建议的分类推荐
+        // 这里简化处理，实际应根据AI返回格式调整
+        const categoryRecommendations = bookmarks
+          .filter(b => b.category === '未分类' || !b.category)
+          .slice(0, 5)
+          .map(bookmark => ({
+            bookmarkId: bookmark.id,
+            categories: suggestCategoriesForBookmark(bookmark, categories.map(c => c.name)),
+          }));
+        
+        setAiSuggestions({
+          categories,
+          topDomains,
+          insights,
+          categoryRecommendations,
+        });
+      } catch (parseError) {
+        console.error('解析AI分析结果错误:', parseError);
+        // 即使解析失败，也至少展示原始AI输出
+        setAiSuggestions({
+          insights: [analysisResult],
+        });
+      }
     } catch (error) {
       console.error('AI分析错误:', error);
+      setError(error instanceof Error ? error.message : '分析过程中发生未知错误');
     } finally {
       setAnalyzing(false);
     }
@@ -111,34 +140,10 @@ export const useAI = () => {
     
     return suggestions.slice(0, 3);
   };
-  
-  // 根据分类生成可能的兴趣
-  const generateRandomInterests = (categories: { name: string; count: number }[]): string => {
-    const interests = {
-      '技术': ['开源项目', '编程语言', '软件开发'],
-      '学习': ['在线课程', '技能提升', '知识管理'],
-      '生活': ['健康生活', '美食烹饪', '旅游攻略'],
-      '工作': ['职业发展', '效率工具', '远程工作'],
-      '娱乐': ['流媒体内容', '游戏', '音乐发现'],
-      '其他': ['个人成长', '时间管理', '社交网络'],
-    };
-    
-    const categoryNames = categories.map(c => c.name);
-    let result = [];
-    
-    for (const category of categoryNames) {
-      const options = interests[category as keyof typeof interests] || interests['其他'];
-      if (options) {
-        result.push(options[Math.floor(Math.random() * options.length)]);
-        if (result.length >= 2) break;
-      }
-    }
-    
-    return result.join('和');
-  };
 
   return {
     analyzing,
+    error,
     aiSuggestions,
     analyzeBookmarks,
   };
